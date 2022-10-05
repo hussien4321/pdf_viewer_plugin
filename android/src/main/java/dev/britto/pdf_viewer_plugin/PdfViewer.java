@@ -1,8 +1,12 @@
 package dev.britto.pdf_viewer_plugin;
 
 import com.github.barteksc.pdfviewer.PDFView;
+import com.github.barteksc.pdfviewer.link.LinkHandler;
+import com.github.barteksc.pdfviewer.model.LinkTapEvent;
 
+import android.content.Intent;
 import android.content.Context;
+import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -17,6 +21,8 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.platform.PlatformView;
+
+import static androidx.core.content.ContextCompat.startActivity;
 
 /// Disable the PdfView recycle when onDetachedFromWindow is called, fixing the
 /// flutter hot reload.
@@ -47,6 +53,7 @@ public class PdfViewer implements PlatformView, MethodCallHandler {
     final MethodChannel methodChannel;
     private PDFView pdfView;
     private String filePath;
+    LinkHandler linkHandler;
 
     PdfViewer(final Context context,
               MethodChannel methodChannel,
@@ -57,6 +64,7 @@ public class PdfViewer implements PlatformView, MethodCallHandler {
         this.methodChannel = methodChannel;
         this.methodChannel.setMethodCallHandler(this);
 
+        linkHandler = new MyLinktHandler(context);
         if (!params.containsKey("filePath")) {
             return;
         }
@@ -81,6 +89,7 @@ public class PdfViewer implements PlatformView, MethodCallHandler {
                 .swipeHorizontal(false)
                 .enableDoubletap(true)
                 .defaultPage(0)
+                .linkHandler(linkHandler).enableAntialiasing(false)
                 .load();
     }
 
@@ -104,5 +113,23 @@ public class PdfViewer implements PlatformView, MethodCallHandler {
     public void dispose() {
 //        Log.i("PdfViewer", "dispose");
         methodChannel.setMethodCallHandler(null);
+    }
+}
+
+class MyLinktHandler implements LinkHandler {
+    Context context;
+
+    public MyLinktHandler(Context context) {
+        this.context = context;
+    }
+
+    @Override
+    public void handleLinkEvent(LinkTapEvent event) {
+        String url = event.getLink().getUri();
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setData(Uri.parse(url));
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(context, i, null);
     }
 }
