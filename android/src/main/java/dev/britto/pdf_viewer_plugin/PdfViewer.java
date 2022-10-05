@@ -89,7 +89,7 @@ public class PdfViewer implements PlatformView, MethodCallHandler {
                 .swipeHorizontal(false)
                 .enableDoubletap(true)
                 .defaultPage(0)
-                .linkHandler(linkHandler).enableAntialiasing(false)
+                .linkHandler(linkHandler)
                 .load();
     }
 
